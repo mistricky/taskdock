@@ -1,0 +1,56 @@
+{
+  "menu": {
+    "settings": "小组件设置"
+  },
+  "settings": {
+    "hideMode": {
+      "label": "隐藏模式",
+      "desc": "任务栏没有窗口或固定应用时的表现。"
+    },
+    "onlySameOutput": {
+      "label": "仅当前显示器",
+      "desc": "只显示本栏所在显示器上的窗口。"
+    },
+    "onlyActiveWorkspaces": {
+      "label": "仅活动工作区",
+      "desc": "只显示当前活动工作区中的窗口。"
+    },
+    "colorizeIcons": {
+      "label": "图标着色",
+      "desc": "对应用图标应用主题着色。"
+    },
+    "showPinnedApps": {
+      "label": "显示固定应用",
+      "desc": "即使应用未运行也显示已固定的应用。"
+    },
+    "iconScale": {
+      "label": "图标缩放",
+      "desc": "任务栏图标相对胶囊高度的缩放比例。"
+    },
+    "showTitle": {
+      "label": "显示标题",
+      "desc": "在图标旁显示窗口标题（仅水平栏）。",
+      "descDisabled": "垂直栏禁用标题显示。"
+    },
+    "titleWidth": {
+      "label": "标题宽度",
+      "desc": "每个窗口标题的最大像素宽度。"
+    },
+    "smartWidth": {
+      "label": "智能宽度",
+      "desc": "自动收缩标题，使任务栏不超过最大宽度。"
+    },
+    "maxTaskbarWidth": {
+      "label": "最大任务栏宽度",
+      "desc": "任务栏最大宽度占屏幕宽度的百分比。"
+    }
+  },
+  "hideModes": {
+    "visible": "始终可见",
+    "hidden": "空时隐藏",
+    "transparent": "空时透明"
+  },
+  "placeholders": {
+    "titleWidth": "像素宽度"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "id": "taskdock",
+  "name": "TaskDock",
+  "version": "2.0.0",
+  "minNoctaliaVersion": "4.6.6",
+  "author": "Noctalia Team",
+  "official": false,
+  "license": "MIT",
+  "repository": "",
+  "description": "Bar taskbar ported from Noctalia core Taskbar widget — running windows, pinned apps, drag reorder, and context actions.",
+  "tags": [
+    "Bar",
+    "Taskbar",
+    "Windows"
+  ],
+  "entryPoints": {
+    "main": "Main.qml",
+    "barWidget": "BarWidget.qml",
+    "panel": "Panel.qml",
+    "settings": "Settings.qml"
+  },
+  "dependencies": {
+    "plugins": []
+  },
+  "metadata": {
+    "defaultSettings": {
+      "onlySameOutput": false,
+      "onlyActiveWorkspaces": false,
+      "hideMode": "hidden",
+      "colorizeIcons": false,
+      "showTitle": false,
+      "titleWidth": 120,
+      "showPinnedApps": false,
+      "smartWidth": false,
+      "maxTaskbarWidth": 100,
+      "iconScale": 0.8
+    }
+  }
+}

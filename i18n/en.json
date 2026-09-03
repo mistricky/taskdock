@@ -1,0 +1,56 @@
+{
+  "menu": {
+    "settings": "Widget settings"
+  },
+  "settings": {
+    "hideMode": {
+      "label": "Hide mode",
+      "desc": "When the taskbar has no windows or pinned apps."
+    },
+    "onlySameOutput": {
+      "label": "Only same monitor",
+      "desc": "Show only windows on this bar's monitor."
+    },
+    "onlyActiveWorkspaces": {
+      "label": "Only active workspaces",
+      "desc": "Show only windows on currently active workspaces."
+    },
+    "colorizeIcons": {
+      "label": "Colorize icons",
+      "desc": "Apply theme colorization to app icons."
+    },
+    "showPinnedApps": {
+      "label": "Show pinned apps",
+      "desc": "Show pinned apps even when they are not running."
+    },
+    "iconScale": {
+      "label": "Icon scale",
+      "desc": "Scale of taskbar app icons relative to capsule height."
+    },
+    "showTitle": {
+      "label": "Show title",
+      "desc": "Show window titles next to icons (horizontal bar only).",
+      "descDisabled": "Titles are disabled on vertical bars."
+    },
+    "titleWidth": {
+      "label": "Title width",
+      "desc": "Maximum width of each window title in pixels."
+    },
+    "smartWidth": {
+      "label": "Smart width",
+      "desc": "Shrink titles so the taskbar stays within a max width."
+    },
+    "maxTaskbarWidth": {
+      "label": "Max taskbar width",
+      "desc": "Maximum width of the taskbar as a percent of screen width."
+    }
+  },
+  "hideModes": {
+    "visible": "Always visible",
+    "hidden": "Hide when empty",
+    "transparent": "Transparent when empty"
+  },
+  "placeholders": {
+    "titleWidth": "Width in pixels"
+  }
+}
