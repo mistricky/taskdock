@@ -39,11 +39,33 @@ Item {
   anchors.fill: parent
 
   function focusWindow(window) {
-    if (!window)
+    if (!window || window.id === undefined || window.id === null || String(window.id) === "")
       return;
 
+    // A click can race a close/address reuse even after the picker refreshed.
+    const current = (main?.trackedWindows || []).find(w => w.id === String(window.id)
+                                                       && w.trackId === window.trackId);
+    if (!current)
+      return;
+    window = current;
+
     try {
+      // Special workspace: reveal before focus so scratchpad clients become visible
+      if (CompositorService.isHyprland && typeof window.workspaceId === "number" && window.workspaceId < -1) {
+        var name = (window.workspaceName && String(window.workspaceName).indexOf("special") === 0)
+                     ? String(window.workspaceName).replace(/^special:/, "")
+                     : "";
+
+        if (name)
+          Quickshell.execDetached(["hyprctl", "dispatch", "workspace", "special:" + name]);
+      }
+
       CompositorService.focusWindow(window);
+
+      if (CompositorService.isHyprland) {
+        const addr = String(window.id).replace(/^0x/i, "");
+        Quickshell.execDetached(["hyprctl", "dispatch", "focuswindow", "address:0x" + addr]);
+      }
     } catch (error) {
       Logger.e("TaskDock", "Failed to focus stacked window: " + error);
     }

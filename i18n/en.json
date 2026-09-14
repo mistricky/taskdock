@@ -23,6 +23,10 @@
       "label": "Show pinned apps",
       "desc": "Show pinned apps even when they are not running."
     },
+    "keepBackgroundApps": {
+      "label": "Keep background apps",
+      "desc": "After closing windows, keep the dock icon while the app process is still running (macOS-style). Does not use the system tray."
+    },
     "iconScale": {
       "label": "Icon scale",
       "desc": "Scale of taskbar app icons relative to capsule height."

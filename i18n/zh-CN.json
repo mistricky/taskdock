@@ -23,6 +23,10 @@
       "label": "显示固定应用",
       "desc": "即使应用未运行也显示已固定的应用。"
     },
+    "keepBackgroundApps": {
+      "label": "保持后台运行应用",
+      "desc": "关闭窗口后若进程仍在，图标留在 Dock（类似 macOS）。不依赖系统托盘。"
+    },
     "iconScale": {
       "label": "图标缩放",
       "desc": "任务栏图标相对胶囊高度的缩放比例。"

@@ -8,5 +8,6 @@
   "maxTaskbarWidth": 100,
   "titleWidth": 120,
   "showPinnedApps": false,
+  "keepBackgroundApps": true,
   "iconScale": 0.8
 }

@@ -26,6 +26,7 @@ ColumnLayout {
   property int valueMaxTaskbarWidth: main?.maxTaskbarWidth ?? defaults.maxTaskbarWidth ?? 40
   property int valueTitleWidth: main?.titleWidth ?? defaults.titleWidth ?? 120
   property bool valueShowPinnedApps: main?.showPinnedApps ?? defaults.showPinnedApps ?? false
+  property bool valueKeepBackgroundApps: main?.keepBackgroundApps ?? defaults.keepBackgroundApps ?? true
   property real valueIconScale: main?.iconScale ?? defaults.iconScale ?? 0.8
 
   spacing: Style.marginM
@@ -42,6 +43,7 @@ ColumnLayout {
       valueMaxTaskbarWidth = main.maxTaskbarWidth;
       valueTitleWidth = main.titleWidth;
       valueShowPinnedApps = main.showPinnedApps;
+      valueKeepBackgroundApps = main.keepBackgroundApps;
       valueIconScale = main.iconScale;
     }
   }
@@ -61,6 +63,7 @@ ColumnLayout {
     pluginApi.pluginSettings.maxTaskbarWidth = valueMaxTaskbarWidth;
     pluginApi.pluginSettings.titleWidth = parseInt(titleWidthInput.text) || (defaults.titleWidth ?? 120);
     pluginApi.pluginSettings.showPinnedApps = valueShowPinnedApps;
+    pluginApi.pluginSettings.keepBackgroundApps = valueKeepBackgroundApps;
     pluginApi.pluginSettings.iconScale = valueIconScale;
 
     // Drop legacy keys from the previous TaskDock stub
@@ -149,6 +152,18 @@ ColumnLayout {
                  saveSettings();
                }
     defaultValue: defaults.showPinnedApps ?? false
+  }
+
+  NToggle {
+    Layout.fillWidth: true
+    label: pluginApi?.tr("settings.keepBackgroundApps.label") || "Keep background apps"
+    description: pluginApi?.tr("settings.keepBackgroundApps.desc") || ""
+    checked: root.valueKeepBackgroundApps
+    onToggled: checked => {
+                 root.valueKeepBackgroundApps = checked;
+                 saveSettings();
+               }
+    defaultValue: defaults.keepBackgroundApps ?? true
   }
 
   NValueSlider {
