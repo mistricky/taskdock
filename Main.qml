@@ -34,6 +34,19 @@ Item {
   property bool processReady: false
   property int nextWindowToken: 0
   property string lastProcessSnapshot: ""
+  property bool feishuTrayPresent: false
+  property bool feishuMessageBadge: false
+  property bool wechatNotificationPending: false
+  property bool wechatTrayUnread: false
+
+  function isWechatWindow(window) {
+    const appId = String(window?.appId || "").toLowerCase();
+    return appId === "wechat" || appId === "weixin" || appId === "wechatlinux_x86_64";
+  }
+
+  function clearWechatNotification() {
+    wechatNotificationPending = false;
+  }
 
   function windowId(id) {
     const value = String(id ?? "");
@@ -67,6 +80,8 @@ Item {
                   "output": String(w.output || ""), "isFocused": w.isFocused === true});
     }
     trackedWindows = next;
+    if (next.some(w => w.isFocused && isWechatWindow(w)))
+      clearWechatNotification();
     sendProcessSnapshot();
   }
 
@@ -122,6 +137,40 @@ Item {
       root.aliveWindowIds = ({});
       if (root.keepBackgroundApps)
         Logger.w("TaskDock", "Process watcher stopped; using window-only state (" + exitCode + ")");
+    }
+  }
+
+  Process {
+    id: notificationWatcher
+    command: ["python3", "-u", root.pluginApi?.pluginDir + "/scripts/notification_watch.py"]
+    running: !!root.pluginApi
+    stdout: SplitParser {
+      onRead: function(line) {
+        try {
+          const event = JSON.parse(line);
+          if (event.kind === "feishu") {
+            root.feishuTrayPresent = event.present === true;
+            root.feishuMessageBadge = event.unread === true;
+          } else if (event.kind === "wechat") {
+            root.wechatTrayUnread = event.unread === true;
+          } else if (event.kind === "notification" && event.app === "wechat" &&
+                     !root.trackedWindows.some(w => w.isFocused && root.isWechatWindow(w))) {
+            root.wechatNotificationPending = true;
+          }
+        } catch (error) {
+          Logger.w("TaskDock", "Invalid notification watcher event: " + error);
+        }
+      }
+    }
+    stderr: SplitParser {
+      onRead: function(line) { Logger.w("TaskDock", "Notification watcher: " + line); }
+    }
+    onExited: function(exitCode, exitStatus) {
+      root.feishuTrayPresent = false;
+      root.feishuMessageBadge = false;
+      root.wechatNotificationPending = false;
+      root.wechatTrayUnread = false;
+      Logger.w("TaskDock", "Notification watcher stopped (" + exitCode + ")");
     }
   }
 

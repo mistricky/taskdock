@@ -9,9 +9,12 @@ Bar taskbar plugin for Noctalia Shell, ported from the core `Modules/Bar/Widgets
 - Pinned apps (uses shell `Settings.data.dock.pinnedApps`)
 - Drag-and-drop reorder
 - Scroll to cycle focused window
+- Uniform red message dot for Feishu and WeChat when their available signals indicate a new message
 - Same filter options as core Taskbar (monitor, workspace, titles, smart width)
 
-Does **not** use the system tray. IME / Wi‑Fi / Bluetooth indicators never appear on the dock.
+Feishu and WeChat can stay on the dock through tray items registered with the current shell after their windows close. Feishu can also be detected through its own running tray service after a shell restart. Other tray items, including IME / Wi‑Fi / Bluetooth indicators, do not appear on the dock.
+
+The Feishu dot follows the red mark in its own tray icon. The WeChat dot follows the tray icon's unread blink, which alternates between its normal image and a transparent image. A desktop notification attributed to WeChat also sets an approximate dot until WeChat is focused or activated from TaskDock. Neither app exposes a numeric count through these sources. The watcher reads only the notification application name, not message text.
 
 ## Entry points
 
@@ -19,6 +22,7 @@ Does **not** use the system tray. IME / Wi‑Fi / Bluetooth indicators never app
 - `Settings.qml` — plugin settings
 - `Main.qml` — shared window snapshots and event-driven process lifecycle host
 - `scripts/process_watch.py` — one Linux pidfd listener for all bar instances
+- `scripts/notification_watch.py` — desktop notification app names and messaging tray signals
 
 ## Install
 
@@ -51,7 +55,8 @@ one application's background icon alive.
 Requires Linux `pidfd_open` support and Python 3.9+. Backend PID absence or listener
 failure degrades to window-only state, never name-based liveness. Toggle background
 tracking off/on or reload the plugin to restart a stopped listener. Reload reconstructs
-associations from current windows; apps already windowless are not rediscovered.
+associations from current windows; other apps already windowless are not rediscovered.
+Message dots additionally require Python D-Bus and PyGObject bindings.
 
 ## Verification
 

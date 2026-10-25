@@ -12,6 +12,7 @@ import qs.Services.Compositor
 import qs.Services.System
 import qs.Services.UI
 import qs.Widgets
+import qs.Commons as NoctaliaCommons
 
 Item {
   id: root
@@ -116,6 +117,15 @@ Item {
   property var hoveredWindowId: ""
   // Combined model of running windows and pinned apps
   property var combinedModel: []
+
+  function hasMessageBadge(appId) {
+    const key = normalizeAppId(resolveAppIdentity(appId, "").appId);
+    if (key === "feishu")
+      return main?.feishuMessageBadge === true;
+    if (key === "wechatlinux_x86_64" || key === "wechat")
+      return main?.wechatTrayUnread === true || main?.wechatNotificationPending === true;
+    return false;
+  }
 
   // Wheel scroll handling
   property int wheelAccumulatedDelta: 0
@@ -371,6 +381,9 @@ Item {
   function activateAppGroup(group, anchorItem) {
     if (!group)
       return;
+
+    if (normalizeAppId(resolveAppIdentity(group.appId, "").appId) === "wechatlinux_x86_64" && main?.clearWechatNotification)
+      main.clearWechatNotification();
 
     const windows = validWindows(group.windows || []);
 
@@ -1452,6 +1465,49 @@ Item {
     // Commit session memory once
     sessionSeenApps = seenNext;
 
+    // These messaging apps can remain available through a tray item registered
+    // with the current shell after their last window closes.
+    if (keepBackgroundApps && SystemTray.items?.values) {
+      const trayItems = SystemTray.items.values;
+      for (var ti = 0; ti < trayItems.length; ti++) {
+        const item = trayItems[ti];
+        if (!item)
+          continue;
+
+        const identity = resolveAppIdentity(item.tooltipTitle || item.title || item.id, "");
+        const appId = identity.appId;
+        const key = normalizeAppId(appId);
+        if ((key !== "feishu" && key !== "wechatlinux_x86_64") || groupByKey[key])
+          continue;
+
+        groupByKey[key] = {
+          "id": key,
+          "type": "background",
+          "window": null,
+          "windows": [],
+          "count": 0,
+          "appId": appId,
+          "title": getAppNameFromDesktopEntry(appId)
+        };
+        groups.push(groupByKey[key]);
+        processedAppIds.add(key);
+      }
+    }
+
+    if (keepBackgroundApps && main?.feishuTrayPresent && !groupByKey.feishu) {
+      groupByKey.feishu = {
+        "id": "feishu",
+        "type": "background",
+        "window": null,
+        "windows": [],
+        "count": 0,
+        "appId": "feishu",
+        "title": getAppNameFromDesktopEntry("feishu")
+      };
+      groups.push(groupByKey.feishu);
+      processedAppIds.add("feishu");
+    }
+
     // Second pass: Add non-running pinned apps (only if showPinnedApps is enabled)
     if (showPinnedApps) {
       pinnedApps.forEach(pinnedAppId => {
@@ -1685,11 +1741,21 @@ Item {
     function onAliveWindowIdsChanged() {
       updateCombinedModel();
     }
+    function onFeishuTrayPresentChanged() {
+      updateCombinedModel();
+    }
   }
 
   Connections {
     target: Settings.data.dock
     function onPinnedAppsChanged() {
+      updateCombinedModel();
+    }
+  }
+
+  Connections {
+    target: SystemTray.items
+    function onValuesChanged() {
       updateCombinedModel();
     }
   }
@@ -1870,6 +1936,7 @@ Item {
           readonly property bool isPinnedRunning: isPinned && isRunning && !isFocused
           readonly property bool isHovered: root.hoveredWindowId === modelData.id
           readonly property bool isStacked: windowCount > 1
+          readonly property bool hasMessageBadge: root.hasMessageBadge(modelData.appId)
           // How many of this app's windows sit on a special workspace (Hyprland scratchpad etc.)
           readonly property int specialWindowCount: root.countSpecialWindows(groupWindows)
           // 0 = none on special; 1 = all on special; partial = mixed
@@ -1877,26 +1944,25 @@ Item {
           // Non-active apps dim; hover restores full opacity for affordance
           // Background stays slightly brighter so it reads as "still running"
           readonly property real itemOpacity: (isFocused || isHovered) ? 1.0 : (isBackground ? 0.7 : 0.45)
+          property real visualOpacity: itemOpacity
+          Behavior on visualOpacity {
+            NumberAnimation {
+              duration: Style.animationFast
+              easing.type: Easing.OutCubic
+            }
+          }
 
           readonly property bool shouldShowTitle: root.showTitle && modelData.type !== "pinned"
           readonly property real itemSpacing: Style.marginS
           readonly property real contentWidth: shouldShowTitle ? root.itemSize + itemSpacing + root.titleWidth : root.itemSize
 
           readonly property string title: modelData.title || modelData.appId || "Unknown application"
-          readonly property color titleBgColor: (isHovered || isFocused) ? Color.mHover : Style.capsuleColor
-          readonly property color titleFgColor: (isHovered || isFocused) ? Color.mOnHover : Color.mOnSurface
+          readonly property color titleBgColor: (isHovered || isFocused) ? NoctaliaCommons.Color.mHover : Style.capsuleColor
+          readonly property color titleFgColor: (isHovered || isFocused) ? NoctaliaCommons.Color.mOnHover : NoctaliaCommons.Color.mOnSurface
 
           Layout.preferredWidth: root.isVerticalBar ? root.barHeight : (root.showTitle ? Math.round(contentWidth + Style.margin2M) : Math.round(contentWidth)) // Add margins for both pinned and running apps
           Layout.preferredHeight: root.isVerticalBar ? root.itemSize : root.barHeight
           Layout.alignment: Qt.AlignCenter
-
-          opacity: itemOpacity
-          Behavior on opacity {
-            NumberAnimation {
-              duration: Style.animationFast
-              easing.type: Easing.OutCubic
-            }
-          }
 
           // Ensure dragged item is on top
           z: (root.dragSourceIndex === index) ? 1000 : 1
@@ -2019,6 +2085,7 @@ Item {
             Rectangle {
               id: titleBackground
               visible: shouldShowTitle
+              opacity: taskbarItem.visualOpacity
               anchors.centerIn: parent
               width: parent.width
               height: root.capsuleHeight
@@ -2073,6 +2140,7 @@ Item {
                     Item {
                       id: roundedIconHost
                       anchors.fill: parent
+                      opacity: taskbarItem.visualOpacity
                       z: 10
                       layer.enabled: true
                       layer.smooth: true
@@ -2101,7 +2169,7 @@ Item {
                         // Optional theme colorize (under the rounded mask)
                         layer.enabled: root.colorizeIcons
                         layer.effect: ShaderEffect {
-                          property color targetColor: Settings.data.colorSchemes.darkMode ? Color.mOnSurface : Color.mSurfaceVariant
+                          property color targetColor: Settings.data.colorSchemes.darkMode ? NoctaliaCommons.Color.mOnSurface : NoctaliaCommons.Color.mSurfaceVariant
                           property real colorizeMode: 0.0
 
                           fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/appicon_colorize.frag.qsb")
@@ -2114,6 +2182,7 @@ Item {
                     Canvas {
                       id: specialProgressBorder
                       anchors.fill: parent
+                      opacity: taskbarItem.visualOpacity
                       z: 15
                       visible: taskbarItem.specialRatio > 0.001
                       antialiasing: true
@@ -2294,12 +2363,29 @@ Item {
                         ctx.stroke();
                       }
                     }
+
+                    Rectangle {
+                      visible: taskbarItem.hasMessageBadge
+                      width: Math.max(10, Math.round(root.itemSize * 0.32))
+                      height: width
+                      radius: width / 2
+                      // Use a soft notification red independent of the theme.
+                      color: "#E57373"
+                      border.width: 1
+                      border.color: Qt.rgba(1, 1, 1, 0.45)
+                      anchors.top: parent.top
+                      anchors.topMargin: -Math.round(width * 0.22)
+                      anchors.right: parent.right
+                      anchors.rightMargin: -Math.round(width * 0.22)
+                      z: 20
+                    }
                   }
 
-                  // Window indicators on the right: one dot per window (2+ only), max 5
+                  // Window indicators on the right: short bars, distinct from message badges.
                   Column {
                     id: windowDotsCol
                     visible: iconSlot.windowDotCount > 0
+                    opacity: taskbarItem.visualOpacity
                     anchors.left: iconFace.right
                     anchors.leftMargin: iconSlot.windowDotsPad
                     anchors.verticalCenter: iconFace.verticalCenter
@@ -2311,11 +2397,11 @@ Item {
 
                       Rectangle {
                         required property int index
-                        width: iconSlot.windowDotSize
-                        height: iconSlot.windowDotSize
-                        radius: width / 2
-                        // Focused app: stronger dots; otherwise muted
-                        color: taskbarItem.isFocused ? Color.mPrimary : Color.mOnSurface
+                        width: Math.max(2, Math.round(iconSlot.windowDotSize * 0.5))
+                        height: Math.max(5, Math.round(iconSlot.windowDotSize * 1.5))
+                        radius: 1
+                        // Focused app: stronger window marks; otherwise muted
+                        color: taskbarItem.isFocused ? NoctaliaCommons.Color.mPrimary : NoctaliaCommons.Color.mOnSurface
                         opacity: taskbarItem.isFocused ? 0.95 : 0.45
                       }
                     }
@@ -2337,7 +2423,7 @@ Item {
 
                   pointSize: barFontSize
                   color: titleFgColor
-                  opacity: Style.opacityFull
+                  opacity: Style.opacityFull * taskbarItem.visualOpacity
                 }
               }
             }
